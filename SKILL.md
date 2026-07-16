@@ -10,7 +10,7 @@ description: Use when installing or setting up a rich Claude Code statusLine tha
 Installs a ready-made Claude Code statusLine that renders one line:
 
 ```
-📁 ~/claude | 🤖 Opus 4.8 (1M context) | 🧠 95% left (45k/1000k) | 💰 $0.42 | ⏱ 2m5s
+📁 ~/claude | 🤖 Opus 4.8 (1M context) | 🧠 95% left (45k/1000k) | 🪙 45k tokens | 💰 $0.42 | ⏱ 2m5s
 ```
 
 | Segment | Icon | Source field |
@@ -18,6 +18,7 @@ Installs a ready-made Claude Code statusLine that renders one line:
 | Directory (`$HOME` → `~`) | 📁 | `.workspace.current_dir` |
 | Model + context size | 🤖 | `.model.display_name` + `.context_window.context_window_size` |
 | Context remaining | 🧠 | `.context_window.remaining_percentage` + `total_input_tokens`+`total_output_tokens` / `context_window_size` |
+| Tokens consumed | 🪙 | `total_input_tokens`+`total_output_tokens` (`k`, or `M` at ≥1,000,000) |
 | Session cost (USD) | 💰 | `.cost.total_cost_usd` |
 | API time | ⏱ | `.cost.total_api_duration_ms` |
 
@@ -58,7 +59,7 @@ The script lives next to this SKILL.md as `statusline-command.sh`. Run these ste
    ```bash
    echo '{"workspace":{"current_dir":"'"$HOME"'/claude"},"model":{"display_name":"Opus 4.8"},"context_window":{"context_window_size":1000000,"remaining_percentage":95,"total_input_tokens":40000,"total_output_tokens":5000},"cost":{"total_cost_usd":0.42,"total_api_duration_ms":125000}}' | bash ~/.claude/statusline-command.sh
    ```
-   Expected: `📁 ~/claude | 🤖 Opus 4.8 (1M context) | 🧠 95% left (45k/1000k) | 💰 $0.42 | ⏱ 2m5s`
+   Expected: `📁 ~/claude | 🤖 Opus 4.8 (1M context) | 🧠 95% left (45k/1000k) | 🪙 45k tokens | 💰 $0.42 | ⏱ 2m5s`
 
 Takes effect on the next interaction with Claude Code — no restart needed.
 

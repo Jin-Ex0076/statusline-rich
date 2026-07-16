@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rich statusLine for Claude Code.
 # Renders one line:
-#   📁 <dir> | 🤖 <model> (<ctx>) | 🧠 <pct>% left (<used>/<total>) | 💰 $<cost> | ⏱ <api time>
+#   📁 <dir> | 🤖 <model> (<ctx>) | 🧠 <pct>% left (<used>/<total>) | 🪙 <tokens> | 💰 $<cost> | ⏱ <api time>
 # Claude Code feeds the statusLine JSON payload on stdin. Requires: jq.
 
 input=$(cat)
@@ -10,6 +10,7 @@ input=$(cat)
 DIR='\033[36m'    # cyan   – directory
 MODEL='\033[35m'  # magenta– model
 CTX='\033[32m'    # green  – context remaining
+TOK='\033[95m'    # bright magenta – tokens consumed
 COST='\033[33m'   # yellow – session cost
 TIME='\033[34m'   # blue   – API time
 DIM='\033[2m'     # dim    – separators
@@ -38,6 +39,13 @@ used_k="$(( used / 1000 ))k"
 total_k="$(( size / 1000 ))k"
 pct_i="${pct%%.*}"
 
+# ── 🪙 Tokens consumed (input + output) ────────────────
+if [ "${used:-0}" -ge 1000000 ]; then
+  tok_fmt=$(awk "BEGIN{printf \"%.1fM\", ${used}/1000000}")
+else
+  tok_fmt="$(( used / 1000 ))k"
+fi
+
 # ── 💰 Session cost (USD, estimated at Anthropic list pricing) ──
 cost=$(jq -r '.cost.total_cost_usd // 0' <<<"$input")
 cost_fmt=$(printf '%.2f' "$cost")
@@ -55,5 +63,5 @@ else
 fi
 
 # ── Render ─────────────────────────────────────────────
-printf "${DIR}📁 %s${RST}${SEP}${MODEL}🤖 %s (%s)${RST}${SEP}${CTX}🧠 %s%% left (%s/%s)${RST}${SEP}${COST}💰 \$%s${RST}${SEP}${TIME}⏱ %s${RST}\n" \
-  "$dir" "$model" "$ctx_label" "$pct_i" "$used_k" "$total_k" "$cost_fmt" "$dur"
+printf "${DIR}📁 %s${RST}${SEP}${MODEL}🤖 %s (%s)${RST}${SEP}${CTX}🧠 %s%% left (%s/%s)${RST}${SEP}${TOK}🪙 %s tokens${RST}${SEP}${COST}💰 \$%s${RST}${SEP}${TIME}⏱ %s${RST}\n" \
+  "$dir" "$model" "$ctx_label" "$pct_i" "$used_k" "$total_k" "$tok_fmt" "$cost_fmt" "$dur"
