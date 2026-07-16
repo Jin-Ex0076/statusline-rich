@@ -3,6 +3,8 @@
 # Renders one line:
 #   📁 <dir> | 🤖 <model> (<ctx>) | 🧠 <pct>% left (<used>/<total>) | 🪙 <tokens> | 💰 $<cost> | ⏱ <api time>
 # Claude Code feeds the statusLine JSON payload on stdin. Requires: jq.
+# 🪙 token = cumulative full throughput (input+output+cache) summed from the
+# session transcript — only ever grows, unaffected by context compaction.
 
 input=$(cat)
 
@@ -39,11 +41,23 @@ used_k="$(( used / 1000 ))k"
 total_k="$(( size / 1000 ))k"
 pct_i="${pct%%.*}"
 
-# ── 🪙 Tokens consumed (input + output) ────────────────
-if [ "${used:-0}" -ge 1000000 ]; then
-  tok_fmt=$(awk "BEGIN{printf \"%.1fM\", ${used}/1000000}")
+# ── 🪙 Tokens consumed (cumulative full throughput from transcript) ─────
+# Sum every request's usage (input + output + cache read + cache creation)
+# across the whole session transcript. Stateless: recomputed each refresh,
+# so it never falls back when the context window is compacted.
+transcript=$(jq -r '.transcript_path // empty' <<<"$input")
+if [ -n "$transcript" ] && [ -f "$transcript" ]; then
+  tok_total=$(jq -s '[.[] | (.message.usage // .usage) | select(.!=null)
+      | ((.input_tokens//0)+(.output_tokens//0)
+         +(.cache_read_input_tokens//0)+(.cache_creation_input_tokens//0))] | add // 0' "$transcript")
 else
-  tok_fmt="$(( used / 1000 ))k"
+  tok_total=0
+fi
+tok_total=${tok_total:-0}
+if [ "$tok_total" -ge 1000000 ]; then
+  tok_fmt=$(awk "BEGIN{printf \"%.1fM\", ${tok_total}/1000000}")
+else
+  tok_fmt="$(( tok_total / 1000 ))k"
 fi
 
 # ── 💰 Session cost (USD, estimated at Anthropic list pricing) ──
