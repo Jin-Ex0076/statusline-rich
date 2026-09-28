@@ -2,6 +2,8 @@
 
 一个信息丰富、带图标和颜色的 **Claude Code 状态栏（statusLine）**，一行展示：当前目录、模型（含上下文窗口大小）、上下文剩余、Token 吞吐（本会话 / 当天）、API 耗时（本会话 / 当天）。
 
+![statusline-rich 效果预览](screenshot.png)
+
 ```
 📁 ~/proj │ 🤖 Opus 5 [1M] │ 🧠 87% (130.5k/1M) │ 🪙 573.9k/2.1M │ ⏱️ 3m12s/1h05m
 ```
